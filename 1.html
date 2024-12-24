@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>机器人眼睛和嘴巴</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: black; /* 设置背景颜色为黑色 */
+    }
+  </style>
+</head>
+<body>
+  <script>
+    let canvas;
+    let blinkTimer = 0;
+    let nextBlinkTime = 0; // 初始化为0
+    let blinking = false;
+    let blinkDuration = 100; // 眨眼持续时间，单位为毫秒
+    let showQuestionMark = false; // 是否显示问号
+    let questionMarkAngle = 0; // 问号的角度
+    let angleDirection = 1; // 角度方向，1表示正向，-1表示反向
+    let showCustomExpression = false; // 是否显示自定义表情
+    let expressions = ["ᗜᗜ", "ಠಠ", "◔‿◔"]; // 自定义表情列表
+    let currentExpressionIndex = 0; // 当前显示的表情索引
+    let expressionYOffset = 0; // 表情垂直偏移量
+    let expressionYVelocity = 0; // 表情垂直速度
+    let showMouth = true; // 嘴巴是否显示
+
+    function setup() {
+      canvas = createCanvas(windowWidth, windowHeight); // 创建画布并设置为屏幕大小
+      nextBlinkTime = getRandomInt(2000, 3500); // 初始化下次眨眼时间
+    }
+
+    function draw() {
+      background(0); // 设置背景颜色为黑色
+
+      // 计算眼睛的比例大小
+      let eyeSize = min(width, height) * 0.3; // 眼睛大小为画布最小边长的30%
+
+      // 更新眨眼计时器
+      if (!blinking && millis() - blinkTimer >= nextBlinkTime) {
+        blinking = true;
+        blinkTimer = millis();
+        nextBlinkTime = getRandomInt(2000, 3500); // 重新设置下次眨眼时间
+      }
+
+      // 处理眨眼动画
+      if (blinking && millis() - blinkTimer < blinkDuration && !showCustomExpression) {
+        // 绘制左眼成一条线
+        strokeWeight(eyeSize * 0.1);
+        stroke(255); // 设置线条颜色为白色
+        line(width / 2 - eyeSize * 1.2 - eyeSize / 2, height / 2, width / 2 - eyeSize * 1.2 + eyeSize / 2, height / 2);
+
+        // 绘制右眼成一条线
+        line(width / 2 + eyeSize * 1.2 - eyeSize / 2, height / 2, width / 2 + eyeSize * 1.2 + eyeSize / 2, height / 2);
+      } else {
+        blinking = false;
+
+        // 如果不在特殊表情模式下，则绘制普通的眼睛和眼珠
+        if (!showCustomExpression) {
+          // 绘制左眼
+          fill(255); // 设置填充颜色为白色
+          noStroke(); // 不绘制边框
+          ellipse(width / 2 - eyeSize * 1.2, height / 2, eyeSize, eyeSize); // 绘制左眼的圆形轮廓
+
+          // 计算左眼珠的位置基于鼠标位置
+          let leftPupilOffsetX = map(mouseX, 0, width, -eyeSize * 0.25, eyeSize * 0.25);
+          let leftPupilOffsetY = map(mouseY, 0, height, -eyeSize * 0.25, eyeSize * 0.25);
+
+          // 绘制左眼珠
+          fill(0); // 设置填充颜色为黑色
+          ellipse(width / 2 - eyeSize * 1.2 + leftPupilOffsetX, height / 2 + leftPupilOffsetY, eyeSize * 0.33, eyeSize * 0.33); // 绘制左眼珠
+
+          // 绘制右眼
+          fill(255); // 设置填充颜色为白色
+          noStroke(); // 不绘制边框
+          ellipse(width / 2 + eyeSize * 1.2, height / 2, eyeSize, eyeSize); // 绘制右眼的圆形轮廓
+
+          // 计算右眼珠的位置基于鼠标位置
+          let rightPupilOffsetX = map(mouseX, 0, width, -eyeSize * 0.25, eyeSize * 0.25);
+          let rightPupilOffsetY = map(mouseY, 0, height, -eyeSize * 0.25, eyeSize * 0.25);
+
+          // 绘制右眼珠
+          fill(0); // 设置填充颜色为黑色
+          ellipse(width / 2 + eyeSize * 1.2 + rightPupilOffsetX, height / 2 + rightPupilOffsetY, eyeSize * 0.33, eyeSize * 0.33); // 绘制右眼珠
+        }
+      }
+
+      // 显示问号
+      if (showQuestionMark) {
+        push();
+        translate(width / 2 + eyeSize * 1.5, height / 2 - eyeSize * 0.7); // 调整问号的位置
+        rotate(questionMarkAngle);
+        textSize(eyeSize * 0.5);
+        textAlign(CENTER, CENTER);
+        fill(255);
+        text('?', 0, 0);
+        pop();
+
+        // 更新问号角度
+        questionMarkAngle += angleDirection * 0.05;
+        if (questionMarkAngle > 0.2 || questionMarkAngle < -0.2) {
+          angleDirection *= -1; // 改变方向
+        }
+      }
+
+      // 根据当前表达式索引绘制不同的嘴巴
+      if (showMouth && !showCustomExpression) {
+        let mouthWidth = eyeSize * 1.5; // 嘴巴宽度
+        let mouthHeight = eyeSize * 0.3; // 嘴巴高度
+
+        strokeWeight(mouthHeight * 0.2); // 设置线条粗细
+        fill(255); // 设置填充颜色为白色
+        switch (currentExpressionIndex) {
+          case 0: // 笑的嘴
+            arc(width / 2, height / 2 + eyeSize * 0.7, mouthWidth, mouthHeight * 2, PI, TWO_PI);
+            break;
+          case 1: // 不高兴的嘴
+            arc(width / 2, height / 2 + eyeSize * 0.7, mouthWidth, mouthHeight * 2, 0, PI);
+            break;
+          case 2: // 撇嘴
+            beginShape();
+            vertex(width / 2 - mouthWidth / 2, height / 2 + eyeSize * 0.7 - mouthHeight / 2);
+            vertex(width / 2 + mouthWidth / 2, height / 2 + eyeSize * 0.7 - mouthHeight / 2);
+            vertex(width / 2 + mouthWidth / 4, height / 2 + eyeSize * 0.7 + mouthHeight / 2);
+            endShape(CLOSE);
+            break;
+          case 3: // 惊讶的嘴
+            triangle(
+              width / 2 - mouthWidth / 2, height / 2 + eyeSize * 0.7,
+              width / 2, height / 2 + eyeSize * 0.7 + mouthHeight,
+              width / 2 + mouthWidth / 2, height / 2 + eyeSize * 0.7
+            );
+            break;
+        }
+      }
+
+      // 显示自定义表情
+      if (showCustomExpression) {
+        // 添加垂直抖动效果
+        expressionYVelocity += random(-0.1, 0.1); // 随机改变垂直速度
+        expressionYOffset += expressionYVelocity; // 更新垂直偏移量
+        expressionYVelocity *= 0.9; // 减少速度以模拟阻尼效果
+
+        // 获取当前表情字符串
+        let expression = expressions[currentExpressionIndex];
+
+        // 绘制自定义表情
+        push();
+        translate(width / 2, height / 2 + expressionYOffset);
+        textSize(eyeSize * 2);
+        textAlign(CENTER, CENTER);
+        fill(255);
+        text(expression, 0, 0);
+        pop();
+      }
+    }
+
+    function mouseClicked() {
+      // expression = (expression + 1) % 4; // 切换表情
+    }
+
+    function keyPressed() {
+      if (key === '1') {
+        showQuestionMark = !showQuestionMark; // 切换问号显示状态
+      } else if (key === '2') {
+        showMouth = !showMouth; // 切换嘴巴显示状态
+      } else if (key === '3') {
+        showCustomExpression = !showCustomExpression; // 进入或退出特殊表情模式
+        if (showCustomExpression) {
+          currentExpressionIndex = (currentExpressionIndex + 1) % expressions.length; // 循环切换表情
+        }
+      }
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight); // 调整画布大小
+      nextBlinkTime = getRandomInt(2000, 3500); // 重新设置下次眨眼时间
+    }
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+  </script>
+</body>
+</html>
+
+
+
